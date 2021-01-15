@@ -37,3 +37,23 @@ oracl <- function(x, bg, ontology = "bp", taxon = "Athaliana",  enrichmentTestTy
   ## filter result
 
 }
+
+#' Translate ontology and taxon to IDs
+#'
+#' translate ontology and taxon to IDs readable by the panther API.
+#' @param ont User-specified ontology, one of "bp", "mf" or "cc".
+#' @param tax User-specified taxon, must be "Athaliana".
+#' @return A vector of length 2 with Panther-specific IDs for taxon and ontology.
+
+oracl_settings <- function(ont, tax){
+
+  ## prepate dictionaries
+  ont.dict = c("GO:0008150", "GO:0003674", "GO:0005575") %>%  c("bp", "mf", "cc")
+  tax.dict = 3702 %>% setNames("Athaliana")
+
+  return(
+    c(ont.dict[[ont]],
+      tax.dict)
+  )
+
+}
