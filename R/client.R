@@ -23,7 +23,7 @@
 #' @return A dataframe
 #' @export
 
-oracl <- function(x, bg, ontology = "bp", taxon = "Athaliana",  enrichmentTestType = "FISHER", correction = "BONFERRONI", type = "enrichment", fdr.thresh = 0.1, p.thresh = 0.05){
+oracl <- function(x, bg, ontology = "bp", taxon = "Athaliana",  enrichmentTestType = "FISHER", correction = "BONFERRONI", type = "enrichment", panther_api.url = "http://pantherdb.org//services/oai/pantherdb/enrich/overrep", fdr.thresh = 0.1, p.thresh = 0.05){
 
   ## translate ontology and taxon into taxonID and ontology term
   oracl.settings = oracl_settings(ontology, taxon)
