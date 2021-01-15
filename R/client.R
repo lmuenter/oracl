@@ -48,12 +48,12 @@ oracl <- function(x, bg, ontology = "bp", taxon = "Athaliana",  enrichmentTestTy
 oracl_settings <- function(ont, tax){
 
   ## prepate dictionaries
-  ont.dict = c("GO:0008150", "GO:0003674", "GO:0005575") %>%  c("bp", "mf", "cc")
+  ont.dict = c("GO:0008150", "GO:0003674", "GO:0005575") %>%  setNames(c("bp", "mf", "cc"))
   tax.dict = 3702 %>% setNames("Athaliana")
 
   return(
     c(ont.dict[[ont]],
-      tax.dict)
+      tax.dict[[tax]])
   )
 
 }
