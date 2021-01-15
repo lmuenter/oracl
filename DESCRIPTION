@@ -12,3 +12,5 @@ LazyData: true
 URL: https://github.com/lmuenter/oracl
 BugReports: https://github.com/lmuenter/oracl/issues
 RoxygenNote: 7.1.1
+Imports: 
+    magrittr
