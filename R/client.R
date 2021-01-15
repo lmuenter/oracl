@@ -208,7 +208,7 @@ oraclient_extract_goterms = function(als){
 #' @return Tabular GOterms to be processed further
 oraclient_add_genes = function(df, genes, ont){
 
-  ont.dict = list(bp.df, mf.df, cc.df) %>%setNames(c("bp", "mf", "cc"))
+  ont.dict = list(oracl:::bp.df, oracl:::mf.df, oracl:::cc.df) %>%setNames(c("bp", "mf", "cc"))
   gos = df %>% pull(GO_ID) %>% as.character %>% na.omit
   ont.df = ont.dict[[ont]] %>% filter(locus %in% genes)
 
