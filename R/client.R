@@ -40,6 +40,10 @@ oracl <- function(x, bg = NULL, ontology = "bp", taxon = "Athaliana",  enrichmen
   ## POST
   oracl.POST = oracl_POST(oracl.body, panther_api.url)
 
+  ## transform to dataframe
+
+  ## get genes per GOterm
+
   ## filter result
 
 }
