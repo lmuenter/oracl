@@ -17,32 +17,58 @@
 #' @param taxon Name of organism to be studied (Defaults to: Athaliana (ID: 3702))
 #' @param ontology Panther annotation data type of interest (Defaults to "GO:0008150" for BP, also possible: "GO:0003674" for MF, "GO:0005575" for CC)
 #' @param enrichmentTestType Type of enrichment test (Defaults to: "FISHER", also possible: BINOMIAL)
-#' @param correction FP-Correction method (Defaults to: "BONFERRONI", also possible: FDR)
+#' @param correction FP-Correction method (Defaults to: "FDR", also possible: BONFERRONI)
 #' @param panther_api.url URL to API "http://pantherdb.org//services/oai/pantherdb/enrich/overrep"
 #' @param fdr.thresh FDR cutoff (default: 0.1)
 #' @param p.thresh P-value cutoff to be applied (default: p < 0.05)
+#' @param tidy Should output be a raw list or a dataframe? TRUE/FALSE, default FALSE
 #' @return A dataframe
 #' @export
 
-oracl <- function(x, bg = NULL, ontology = "bp", taxon = "Athaliana",  enrichmentTestType = "FISHER", correction = "BONFERRONI", panther_api.url = "http://pantherdb.org//services/oai/pantherdb/enrich/overrep", fdr.thresh = 0.1, p.thresh = 0.05){
+oraclient <- function(x, bg = NULL, ontology = "bp", taxon = "Athaliana",  enrichmentTestType = "FISHER", correction = "FDR", panther_api.url = "http://pantherdb.org//services/oai/pantherdb/enrich/overrep", fdr.thresh = 0.1, p.thresh = 0.05, tidy = FALSE){
 
   ## translate ontology and taxon into taxonID and ontology term
-  oracl.settings = oracl_settings(ont = ontology, tax = taxon)
+  oraclient.settings = oraclient_settings(ont = ontology, tax = taxon)
+  fdr.thresh = ifelse(correction == "BONFERRONI", 0, fdr.thresh)
 
   ## build POST body
-  oracl.body = oracl_body(geneset = x,
+  oraclient.body = oraclient_body(geneset = x,
                           geneset_bg = bg,
-                          ont = oracl.settings[1],
-                          tax = oracl.settings[2],
+                          ont = oraclient.settings[1],
+                          tax = oraclient.settings[2],
                           ett = enrichmentTestType,
                           correct = correction)
 
+  ## helpful message
+  sprintf("[oraclient] Overrepresentation test. Ontology: %s, taxon: %s, %s test and %s correction. P-threshold is %s, FDR threshold is %s.",
+          ontology,
+          taxon,
+          enrichmentTestType,
+          correction,
+          p.thresh,
+          fdr.thresh) %>%
+    print()
+
   ## POST
-  oracl.POST = oracl_POST(oracl.body, panther_api.url)
+  oraclient.POST = oraclient_POST(oraclient.body, panther_api.url)
 
-  ## transform to dataframe
 
-  ## get genes per GOterm
+  ## format output
+  if(tidy){
+    out = oraclient.POST %>%
+      oraclient_to_df() %>%
+      filter(fdr < fdr.thresh) %>%
+      filter(p.value < p.thresh)
+
+    return(out)
+
+  } else {
+
+    return(oraclient.POST)
+
+  }
+
+  return(out)
 
   ## filter result
 
@@ -55,7 +81,7 @@ oracl <- function(x, bg = NULL, ontology = "bp", taxon = "Athaliana",  enrichmen
 #' @param tax User-specified taxon, must be "Athaliana".
 #' @return A vector of length 2 with Panther-specific IDs for taxon and ontology.
 
-oracl_settings <- function(ont, tax){
+oraclient_settings <- function(ont, tax){
 
   ## prepate dictionaries
   ont.dict = c("GO:0008150", "GO:0003674", "GO:0005575") %>%  setNames(c("bp", "mf", "cc"))
@@ -81,7 +107,7 @@ oracl_settings <- function(ont, tax){
 #' @param tax User-specified taxon, must be "Athaliana".
 #' @return A vector of length 2 with Panther-specific IDs for taxon and ontology.
 
-oracl_body <- function(geneset, geneset_bg = NULL, ont, tax, ett, correct){
+oraclient_body <- function(geneset, geneset_bg = NULL, ont, tax, ett, correct){
 
   ## if background is specified, build body with background geneset
   if(!is.null(geneset_bg)){
@@ -125,7 +151,7 @@ oracl_body <- function(geneset, geneset_bg = NULL, ont, tax, ett, correct){
 #' @param post_url URL to be used (character)
 #' @return An ORA (.json)
 
-oracl_POST <- function(post_body, post_url){
+oraclient_POST <- function(post_body, post_url){
 
   ## POST request and extraction of content
   out = retry(
@@ -147,3 +173,37 @@ oracl_POST <- function(post_body, post_url){
 
 }
 
+#' Oraclient to dataframe
+#'
+#' Build a dataframe from output of oracl::oraclient_POST()
+#' @param oraclient.ls A list of goterms
+#' @return An ORA dataframe (tibble)
+oraclient_to_df = function(oraclient.ls){
+
+  goterms.ls = oraclient.ls$results$result
+  goterms = lapply(goterms.ls, oraclient_extract_goterms) %>% do.call("rbind", .)
+
+}
+
+#' Extract GOterms from Panther output
+#'
+#' Extracts GOterms from Panther response
+#' @param als Each and every entry in results$result of a Panther Enrichment
+#' @return Tabular GOterms to be processed further
+oraclient_extract_goterms = function(als){
+
+  als.go = als$term
+  goterm = ifelse(!is.null(als.go$id), yes = als.go$id, no = NA)
+  label = ifelse(!is.null(als.go$label), yes = als.go$label, no = NA)
+
+  data.frame("GO_ID" = goterm,
+             "label" = label,
+             "N" = als$number_in_list,
+             "N.expected" = als$expected,
+             "N.reference" = als$number_in_reference,
+             "p.value" = als$pValue,
+             "fdr" = als$fdr,
+             "fold_change" = als$fold_enrichment,
+             "dir" = als$plus_minus
+  )
+}
