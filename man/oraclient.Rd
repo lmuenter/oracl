@@ -13,8 +13,7 @@ oraclient(
   correction = "FDR",
   panther_api.url = "http://pantherdb.org//services/oai/pantherdb/enrich/overrep",
   fdr.thresh = 0.1,
-  p.thresh = 0.05,
-  tidy = FALSE
+  p.thresh = 0.05
 )
 }
 \arguments{
@@ -35,11 +34,9 @@ oraclient(
 \item{fdr.thresh}{FDR cutoff (default: 0.1)}
 
 \item{p.thresh}{P-value cutoff to be applied (default: p < 0.05)}
-
-\item{tidy}{Should output be a raw list or a dataframe? TRUE/FALSE, default FALSE}
 }
 \value{
-A dataframe
+A dataframe or panther output
 }
 \description{
 A client for the panther webservice. Takes a list of genes and a background geneset and sends them to panther for a classic Overrepresentation Analysis (ORA)

@@ -21,11 +21,10 @@
 #' @param panther_api.url URL to API "http://pantherdb.org//services/oai/pantherdb/enrich/overrep"
 #' @param fdr.thresh FDR cutoff (default: 0.1)
 #' @param p.thresh P-value cutoff to be applied (default: p < 0.05)
-#' @param tidy Should output be a raw list or a dataframe? TRUE/FALSE, default FALSE
-#' @return A dataframe
+#' @return A dataframe or panther output
 #' @export
 
-oraclient <- function(x, bg = NULL, ontology = "bp", taxon = "Athaliana",  enrichmentTestType = "FISHER", correction = "FDR", panther_api.url = "http://pantherdb.org//services/oai/pantherdb/enrich/overrep", fdr.thresh = 0.1, p.thresh = 0.05, tidy = FALSE){
+oraclient <- function(x, bg = NULL, ontology = "bp", taxon = "Athaliana",  enrichmentTestType = "FISHER", correction = "FDR", panther_api.url = "http://pantherdb.org//services/oai/pantherdb/enrich/overrep", fdr.thresh = 0.1, p.thresh = 0.05){
 
   ## translate ontology and taxon into taxonID and ontology term
   oraclient.settings = oraclient_settings(ont = ontology, tax = taxon)
@@ -51,26 +50,16 @@ oraclient <- function(x, bg = NULL, ontology = "bp", taxon = "Athaliana",  enric
 
   ## POST
   oraclient.POST = oraclient_POST(oraclient.body, panther_api.url)
+  oraclient.genes = oraclient.POST$results$input_list$mapped_id
 
+  out.df = oraclient.POST %>%
+    oraclient_to_df() %>%
+    filter(fdr < fdr.thresh) %>%
+    filter(p.value < p.thresh) %>%
+    oraclient_add_genes(., genes = oraclient.genes, ont = ontology)
 
   ## format output
-  if(tidy){
-    out = oraclient.POST %>%
-      oraclient_to_df() %>%
-      filter(fdr < fdr.thresh) %>%
-      filter(p.value < p.thresh)
-
-    return(out)
-
-  } else {
-
-    return(oraclient.POST)
-
-  }
-
-  return(out)
-
-  ## filter result
+  return(out.df)
 
 }
 
@@ -206,4 +195,45 @@ oraclient_extract_goterms = function(als){
              "fold_change" = als$fold_enrichment,
              "dir" = als$plus_minus
   )
+}
+
+#' Add Gene Identifiers
+#'
+#' Add Locus IDs for overrepresented GOterms
+#' @param als Each and every entry in results$result of a Panther Enrichment
+#' @return Tabular GOterms to be processed further
+oraclient_add_genes = function(df, genes, ont){
+
+  ont.dict = list(bp.df, mf.df, cc.df) %>%  setNames(c("bp", "mf", "cc"))
+  gos = df %>% pull(GO_ID) %>% as.character %>% na.omit
+  ont.df = ont.dict[[ont]] %>% filter(locus %in% genes)
+
+  ## get gene IDs per GOterm
+  genes_ora = lapply(gos, grep, ont.df[[2]]) %>%
+    setNames(gos) %>%
+    lapply(function(x, y){
+
+      out = y[x] %>% paste(collapse = ";")
+      return(out)
+
+    }, y = ont.df$locus)
+
+  ## add gene ids to each GOterm
+  gos_and_genes = lapply(names(genes_ora), function(x,y){
+
+    term = x
+    genelist = y[[x]]
+    out = data.frame("GO_ID" = term,
+                     "locus" = genelist)
+
+  }, y = genes_ora) %>%
+    do.call("rbind", .)
+
+  ## add geneIds to GOterm-dataframe
+  out = df %>% left_join(gos_and_genes)
+
+  ## output
+  return(out)
+
+
 }
