@@ -14,3 +14,5 @@ BugReports: https://github.com/lmuenter/oracl/issues
 RoxygenNote: 7.1.1
 Imports: 
     magrittr
+Depends: 
+    R (>= 2.10)
