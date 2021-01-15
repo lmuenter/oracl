@@ -12,6 +12,7 @@
 #' Panther GO term enrichment
 #'
 #' A client for the panther webservice. Takes a list of genes and a background geneset and sends them to panther for a classic Overrepresentation Analysis (ORA)
+#' @import dplyr
 #' @param x A list of gene identifiers (character vector)
 #' @param bg A list of background genes (character vector). If not provided, uses PANTHER standard background.
 #' @param taxon Name of organism to be studied (Defaults to: Athaliana (ID: 3702))
@@ -50,16 +51,19 @@ oraclient <- function(x, bg = NULL, ontology = "bp", taxon = "Athaliana",  enric
 
   ## POST
   oraclient.POST = oraclient_POST(oraclient.body, panther_api.url)
-  oraclient.genes = oraclient.POST$results$input_list$mapped_id
+  oraclient.genes = oraclient.POST$results$input_list$mapped_id %>% do.call("c", .)
 
+  ## get dataframe
   out.df = oraclient.POST %>%
     oraclient_to_df() %>%
     filter(fdr < fdr.thresh) %>%
-    filter(p.value < p.thresh) %>%
-    oraclient_add_genes(., genes = oraclient.genes, ont = ontology)
+    filter(p.value < p.thresh)
+
+  ## add genes
+  out_and_genes.df = oraclient_add_genes(df = out.df, genes = oraclient.genes, ont = ontology)
 
   ## format output
-  return(out.df)
+  return(out_and_genes.df)
 
 }
 
@@ -204,7 +208,7 @@ oraclient_extract_goterms = function(als){
 #' @return Tabular GOterms to be processed further
 oraclient_add_genes = function(df, genes, ont){
 
-  ont.dict = list(bp.df, mf.df, cc.df) %>%  setNames(c("bp", "mf", "cc"))
+  ont.dict = list(bp.df, mf.df, cc.df) %>%setNames(c("bp", "mf", "cc"))
   gos = df %>% pull(GO_ID) %>% as.character %>% na.omit
   ont.df = ont.dict[[ont]] %>% filter(locus %in% genes)
 

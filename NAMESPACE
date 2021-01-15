@@ -3,6 +3,7 @@
 export("%>%")
 export(oracl_list_to_df)
 export(oraclient)
+import(dplyr)
 importFrom(httr,POST)
 importFrom(httr,content)
 importFrom(magrittr,"%>%")
