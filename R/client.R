@@ -208,36 +208,41 @@ oraclient_extract_goterms = function(als){
 #' @return Tabular GOterms to be processed further
 oraclient_add_genes = function(df, genes, ont){
 
-  ont.dict = list(oracl:::bp.df, oracl:::mf.df, oracl:::cc.df) %>%setNames(c("bp", "mf", "cc"))
-  gos = df %>% pull(GO_ID) %>% as.character %>% na.omit
-  ont.df = ont.dict[[ont]] %>% filter(locus %in% genes)
+  if(nrow(df) != 0){
+    ont.dict = list(oracl:::bp.df, oracl:::mf.df, oracl:::cc.df) %>%setNames(c("bp", "mf", "cc"))
+    gos = df %>% pull(GO_ID) %>% as.character %>% na.omit
+    ont.df = ont.dict[[ont]] %>% filter(locus %in% genes)
 
-  ## get gene IDs per GOterm
-  genes_ora = lapply(gos, grep, ont.df[[2]]) %>%
-    setNames(gos) %>%
-    lapply(function(x, y){
+    ## get gene IDs per GOterm
+    genes_ora = lapply(gos, grep, ont.df[[2]]) %>%
+      setNames(gos) %>%
+      lapply(function(x, y){
 
-      out = y[x] %>% paste(collapse = ";")
-      return(out)
+        out = y[x] %>% paste(collapse = ";")
+        return(out)
 
-    }, y = ont.df$locus)
+      }, y = ont.df$locus)
 
-  ## add gene ids to each GOterm
-  gos_and_genes = lapply(names(genes_ora), function(x,y){
+    ## add gene ids to each GOterm
+    gos_and_genes = lapply(names(genes_ora), function(x,y){
 
-    term = x
-    genelist = y[[x]]
-    out = data.frame("GO_ID" = term,
-                     "locus" = genelist)
+      term = x
+      genelist = y[[x]]
+      out = data.frame("GO_ID" = term,
+                       "locus" = genelist)
 
-  }, y = genes_ora) %>%
-    do.call("rbind", .)
+    }, y = genes_ora) %>%
+      do.call("rbind", .)
 
-  ## add geneIds to GOterm-dataframe
-  out = df %>% left_join(gos_and_genes)
+    ## add geneIds to GOterm-dataframe
+    out = df %>% left_join(gos_and_genes)
+  } else{
+
+    out = df %>% mutate("locus" = "a")
+
+  }
 
   ## output
   return(out)
-
 
 }
