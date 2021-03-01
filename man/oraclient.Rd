@@ -14,7 +14,7 @@ oraclient(
   panther_api.url = "http://pantherdb.org//services/oai/pantherdb/enrich/overrep",
   fdr.thresh = 0.1,
   p.thresh = 0.05,
-  dir = "+"
+  only_overrepresented = TRUE
 )
 }
 \arguments{
@@ -35,6 +35,8 @@ oraclient(
 \item{fdr.thresh}{FDR cutoff (default: 0.1)}
 
 \item{p.thresh}{P-value cutoff to be applied (default: p < 0.05)}
+
+\item{only_overrepresented}{Retain only overrepresented GOterms? (default: TRUE)}
 }
 \value{
 A dataframe or panther output

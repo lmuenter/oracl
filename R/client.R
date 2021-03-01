@@ -22,10 +22,20 @@
 #' @param panther_api.url URL to API "http://pantherdb.org//services/oai/pantherdb/enrich/overrep"
 #' @param fdr.thresh FDR cutoff (default: 0.1)
 #' @param p.thresh P-value cutoff to be applied (default: p < 0.05)
+#' @param only_overrepresented Retain only overrepresented GOterms? (default: TRUE)
 #' @return A dataframe or panther output
 #' @export
 
-oraclient <- function(x, bg = NULL, ontology = "bp", taxon = "Athaliana",  enrichmentTestType = "FISHER", correction = "FDR", panther_api.url = "http://pantherdb.org//services/oai/pantherdb/enrich/overrep", fdr.thresh = 0.1, p.thresh = 0.05, dir = "+"){
+oraclient <- function(x,
+                      bg = NULL,
+                      ontology = "bp",
+                      taxon = "Athaliana",
+                      enrichmentTestType = "FISHER",
+                      correction = "FDR",
+                      panther_api.url = "http://pantherdb.org//services/oai/pantherdb/enrich/overrep",
+                      fdr.thresh = 0.1,
+                      p.thresh = 0.05,
+                      only_overrepresented = TRUE){
 
   ## translate ontology and taxon into taxonID and ontology term
   oraclient.settings = oraclient_settings(ont = ontology, tax = taxon)
@@ -60,12 +70,13 @@ oraclient <- function(x, bg = NULL, ontology = "bp", taxon = "Athaliana",  enric
     filter(p.value < p.thresh)
 
   ## add genes
-  out_and_genes.df = oraclient_add_genes(df = out.df, genes = oraclient.genes, ont = ontology)
+  out_and_genes.df = oraclient_add_genes(df = out.df, genes = oraclient.genes, ont = ontology) %>%
+    mutate_if(is.factor, as.character)
 
   ## format output
-  if(!is.null(dir)){
+  if(only_overrepresented){
 
-    out_and_genes.df = out_and_genes.df %>% filter(dir == dir)
+    out_and_genes.df = out_and_genes.df %>% filter(dir == "+")
 
   }
 
