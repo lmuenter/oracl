@@ -25,7 +25,7 @@
 #' @return A dataframe or panther output
 #' @export
 
-oraclient <- function(x, bg = NULL, ontology = "bp", taxon = "Athaliana",  enrichmentTestType = "FISHER", correction = "FDR", panther_api.url = "http://pantherdb.org//services/oai/pantherdb/enrich/overrep", fdr.thresh = 0.1, p.thresh = 0.05){
+oraclient <- function(x, bg = NULL, ontology = "bp", taxon = "Athaliana",  enrichmentTestType = "FISHER", correction = "FDR", panther_api.url = "http://pantherdb.org//services/oai/pantherdb/enrich/overrep", fdr.thresh = 0.1, p.thresh = 0.05, dir = "+"){
 
   ## translate ontology and taxon into taxonID and ontology term
   oraclient.settings = oraclient_settings(ont = ontology, tax = taxon)
@@ -63,6 +63,12 @@ oraclient <- function(x, bg = NULL, ontology = "bp", taxon = "Athaliana",  enric
   out_and_genes.df = oraclient_add_genes(df = out.df, genes = oraclient.genes, ont = ontology)
 
   ## format output
+  if(!is.null(dir)){
+
+    out_and_genes.df = out_and_genes.df %>% filter(dir == dir)
+
+  }
+
   return(out_and_genes.df)
 
 }

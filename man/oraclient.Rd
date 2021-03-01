@@ -13,7 +13,8 @@ oraclient(
   correction = "FDR",
   panther_api.url = "http://pantherdb.org//services/oai/pantherdb/enrich/overrep",
   fdr.thresh = 0.1,
-  p.thresh = 0.05
+  p.thresh = 0.05,
+  dir = "+"
 )
 }
 \arguments{
