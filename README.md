@@ -1,5 +1,7 @@
 # oracl <img src="etc/www/oracl_logo.png" align="right" width="120" />
 
+NOTE: This package does only accept AGI-codes (*A. thaliana*)
+
 ## Overview
 
 This package provides a client for GO-Term ORA via the API of [`PANTHER`](http://pantherdb.org/). It takes a `vector` of gene IDs, sends it to `PANTHER`, and reformats the response into a handy `dataframe`. This `dataframe` also includes gene IDs, which are associated to the GO-Term in question.
@@ -13,9 +15,6 @@ devtools::install_github("lmuenter/oracl")
 ```
 
 ## Usage
-
-
-### Load packages and get genesets
 In this example, we'd like to identify overrepresented GO-Terms for an example dataset provided with the package. Note, that we specify the *Biological Process* ontology by setting `ont = bp` in `oracl::oraclient()`. Other options are of course `ont = mf` (Molecular Function) and `ont = cc` (Cellular Component).
 
 ``` R
