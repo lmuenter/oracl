@@ -70,7 +70,13 @@ volcanoracl = function(df, x = "fold_change", y = "fdr", top_n = 5){
   ## if grouped dataframe, facet the plot
   if("grouping" %in% colnames(df)){
 
-    p <- p + facet_wrap(grouping ~ .)
+    p <- df %>%
+      mutate(labelthis = ifelse(label %in% top_genes, label, "")) %>%
+      ggplot(aes(x = log2(fold_change), y = -log(fdr), label = labelthis, color = grouping)) +
+      geom_point(show.legend = FALSE) +
+      geom_text_repel(color = "black") +
+      theme_bw() +
+      facet_wrap(grouping ~ .)
 
   }
 
@@ -134,7 +140,7 @@ oraclot = function(df, top_n = 50){
   ## if grouped dataframe, facet the plot
   if("grouping" %in% colnames(df)){
 
-    p <- p + facet_wrap(grouping ~ .)
+    p <- p + facet_wrap(grouping ~ ., ncol = 1, strip.position = "right", scales = "free_y")
 
   }
 
