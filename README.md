@@ -1,98 +1,98 @@
+oracl
+================
+Lukas Muenter
+27 7 2021
+
 # oracl <img src="etc/www/oracl_logo.png" align="right" width="120" />
 
-NOTE: This package does only accept AGI-codes (*A. thaliana*)
+NOTE: Currently, this package does only accept AGI-codes (*A.
+thaliana*). This will change, however.
 
 ## Overview
 
-This package provides a client for GO-Term ORA via the API of [`PANTHER`](http://pantherdb.org/). It takes a `vector` of gene IDs, sends it to `PANTHER`, and reformats the response into a handy `dataframe`. This `dataframe` also includes gene IDs, which are associated to the GO-Term in question.
+This package provides a client for GO-Term enrichment via the API of
+[`PANTHER`](http://pantherdb.org/). It takes a `vector` of gene IDs,
+sends it to `PANTHER`, and reformats the response into a handy
+`dataframe`. This `dataframe` also includes gene IDs, which are
+associated to the GO-Term in question.
 
 ## Installation
 
-
-``` R
-# install from github
-devtools::install_github("lmuenter/oracl")
-```
+    # install from github
+    devtools::install_github("lmuenter/oracl")
 
 ## Usage
-In this example, we'd like to identify overrepresented GO-Terms for an example dataset provided with the package. Note, that we specify the *Biological Process* ontology by setting `ont = bp` in `oracl::oraclient()`. Other options are of course `ont = mf` (Molecular Function) and `ont = cc` (Cellular Component).
 
-``` R
-# load package
-library(oracl)
+In this example, we’d like to identify overrepresented GO-Terms for an
+example dataset provided with the package. Note, that we specify the
+*Biological Process* ontology by setting `ont = bp` in
+`oracl::oraclient()`. Other options are of course `ont = mf` (Molecular
+Function) and `ont = cc` (Cellular Component).
 
-# Get a set of AGI-codes.
-gs <- oracl:::GS01
+    ## [1] "[oraclient] Overrepresentation test. Ontology: bp, taxon: Athaliana, FISHER test and FDR correction. P-threshold is 0.05, FDR threshold is 0.05."
 
-# Get a background geneset (optional)
-bg <- oracl:::background
-
-# conduct GO-Term ORA via PANTHER
-bp.df <- oraclient(gs, bg = bg, ont = "bp", fdr.thresh = 0.05)
-```
+    ## Joining, by = "GO_ID"
 
 ## Advanced Usage
 
 ### Plot results as Volcano Plot
-``` R
-library(tidyverse) # for plotting and data munching
-library(ggrepel)   # for labelling
 
-# get top 5 GO-Terms
-top5 <- bp.df %>% 
-    slice_max(fold_change, -log(fdr), n = 5) %>% 
-    pull(label)
+``` r
+# Load Packages
+library(ggplot2)
 
-# plot
-bp.df %>%
-  mutate(labelthis = ifelse(label %in% top5, label, "")) %>%
-  ggplot(aes(x = log2(fold_change), y = -log(fdr), label = labelthis)) +
-  geom_point() +
-  geom_text_repel() +
-  theme_bw()
+# Make a plot
+volcano.p = volcanoracl(bp.df)
+
+# The plot `volcano.p` is a ggplot-object.
+# We can change its attributes!
+volcano.p + scale_colour_manual("lightred")
 ```
 
+![](README_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+
 ### Using `{oracl}` with a list of genesets
-When several genesets should be inferred, it may be handy to combine overrepresented terms in one dataframe. This is especially useful for plotting.
 
-``` R
-# obtain a list of genesets
-gs.ls <- list(
-    oracl:::GS01,
-    oracl:::GS02,
-    oracl:::GS03
-)
+When several genesets should be inferred, it may be handy to combine
+overrepresented terms in one dataframe. This is especially useful for
+plotting.
 
-# get background geneset
-bg <- oracl:::background
+    ## [1] "[oraclient] Overrepresentation test. Ontology: bp, taxon: Athaliana, FISHER test and FDR correction. P-threshold is 0.05, FDR threshold is 0.05."
 
-# set names of list elements (vital for later)
-names(gs.ls) <- c("GS01", "GS02", "GS03")
+    ## Joining, by = "GO_ID"
 
-# get overrepresented GO-terms
-bp.ls = lapply(gs.ls, oraclient, 
-    bg = bg,
-    ont = "bp",
-    fdr.thresh = 0.05
-)
+    ## [1] "[oraclient] Overrepresentation test. Ontology: bp, taxon: Athaliana, FISHER test and FDR correction. P-threshold is 0.05, FDR threshold is 0.05."
 
-# get ONE dataframe (ID-column `grouping` specifies the geneset)
-bp.df <- oracl_list_to_df(bp.ls)
-``` 
+    ## Joining, by = "GO_ID"
 
+    ## [1] "[oraclient] Overrepresentation test. Ontology: bp, taxon: Athaliana, FISHER test and FDR correction. P-threshold is 0.05, FDR threshold is 0.05."
+
+    ## Joining, by = "GO_ID"
 
 ## Limitations
 
-1. **Gene IDs and Organism**. Currently, only *Arabidopsis thaliana* (L.) Heynh. can be investigated.
+1.  **Gene IDs and Organism**. Currently, only *Arabidopsis thaliana*
+    (L.) Heynh. can be investigated.
 
-2. **Cognate genes**. in order to save resources, the API of `PANTHER` does not report gene sets back (personal communication). Gene IDs reported by `{oracl}` are therefore only approximations. In essence, the underlying geneset is semantically compared to a gene-to-GO-term-dataset for every enriched GO-Term. These datasets are included in `{oracl}` (see `oracl/data/goterms`). Datasets have been generated by conducting ORA using the PANTHER website with *all* available AGI codes. To obtain necessary datasets, all results (without Bonferroni Correction) were exported to .json, parsed, and reformated.
+2.  **Cognate genes**. in order to save resources, the API of `PANTHER`
+    does not report gene sets back (personal communication). Gene IDs
+    reported by `{oracl}` are therefore only approximations. In essence,
+    the underlying geneset is semantically compared to a
+    gene-to-GO-term-dataset for every enriched GO-Term. These datasets
+    are included in `{oracl}` (see `oracl/data/goterms`). Datasets have
+    been generated by conducting ORA using the PANTHER website with
+    *all* available AGI codes. To obtain necessary datasets, all results
+    (without Bonferroni Correction) were exported to .json, parsed, and
+    reformated.
 
 ## Upcoming Functionality
 
-1. Functions for automated plotting.
+1.  Functions for automated plotting.
 
-2. Make other organisms available.
+2.  Make other organisms available.
 
-3. Implement redundancy removal using [`{rrvgo}`](https://bioconductor.org/packages/release/bioc/html/rrvgo.html)
+3.  Implement redundancy removal using
+    [`{rrvgo}`](https://bioconductor.org/packages/release/bioc/html/rrvgo.html)
 
-4. Automate gene-symbol mapping using [`{org.At.tair.db}`](https://bioconductor.org/packages/release/data/annotation/html/org.At.tair.db.html)
+4.  Automate gene-symbol mapping using
+    [`{org.At.tair.db}`](https://bioconductor.org/packages/release/data/annotation/html/org.At.tair.db.html)

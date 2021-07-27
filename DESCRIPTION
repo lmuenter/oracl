@@ -16,6 +16,8 @@ Imports:
     magrittr,
     httr,
     dplyr,
-    retry
+    retry,
+    ggplot2,
+    ggrepel
 Depends: 
     R (>= 2.10)
