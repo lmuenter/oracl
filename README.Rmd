@@ -54,13 +54,13 @@ volcano.p = volcanoracl(bp.df)
 
 # The plot `volcano.p` is a ggplot-object.
 # We can change its attributes!
-volcano.p + scale_colour_manual("lightred")
+volcano.p + scale_colour_manual(values = "steelblue")
 ```
 
 ### Using `{oracl}` with a list of genesets
 When several genesets should be inferred, it may be handy to combine overrepresented terms in one dataframe. This is especially useful for plotting.
 
-```{r echo=FALSE}
+```{r results="hide"}
 # obtain a list of genesets
 gs.ls <- list(
     oracl:::GS01,
@@ -85,6 +85,17 @@ bp.ls = lapply(gs.ls, oraclient,
 bp.df <- oracl_list_to_df(bp.ls)
 ``` 
 
+### Make a facetted dotplot (One facet per group)
+We can now plot overrepresented GO-Terms using group information in the column `bp.df$grouping`.
+We can either make a facetted dotplot:
+```{r}
+oraclot(bp.df, top_n = 20) + scale_color_viridis_c()
+```
+
+Or we can make a facetted volcano plot:
+```{r}
+volcanoracl(bp.df, top_n = 20)
+```
 
 ## Limitations
 

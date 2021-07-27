@@ -46,7 +46,7 @@ volcano.p = volcanoracl(bp.df)
 
 # The plot `volcano.p` is a ggplot-object.
 # We can change its attributes!
-volcano.p + scale_colour_manual("lightred")
+volcano.p + scale_colour_manual(values = "steelblue")
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
@@ -57,17 +57,44 @@ When several genesets should be inferred, it may be handy to combine
 overrepresented terms in one dataframe. This is especially useful for
 plotting.
 
-    ## [1] "[oraclient] Overrepresentation test. Ontology: bp, taxon: Athaliana, FISHER test and FDR correction. P-threshold is 0.05, FDR threshold is 0.05."
+``` r
+# obtain a list of genesets
+gs.ls <- list(
+    oracl:::GS01,
+    oracl:::GS02,
+    oracl:::GS03
+)
+
+# get background geneset
+bg <- oracl:::background
+
+# set names of list elements (vital for later)
+names(gs.ls) <- c("GS01", "GS02", "GS03")
+
+# get overrepresented GO-terms
+bp.ls = lapply(gs.ls, oraclient, 
+    bg = bg,
+    ont = "bp",
+    fdr.thresh = 0.05
+)
+```
 
     ## Joining, by = "GO_ID"
-
-    ## [1] "[oraclient] Overrepresentation test. Ontology: bp, taxon: Athaliana, FISHER test and FDR correction. P-threshold is 0.05, FDR threshold is 0.05."
-
+    ## Joining, by = "GO_ID"
     ## Joining, by = "GO_ID"
 
-    ## [1] "[oraclient] Overrepresentation test. Ontology: bp, taxon: Athaliana, FISHER test and FDR correction. P-threshold is 0.05, FDR threshold is 0.05."
+``` r
+# get ONE dataframe (ID-column `grouping` specifies the geneset)
+bp.df <- oracl_list_to_df(bp.ls)
+```
 
-    ## Joining, by = "GO_ID"
+### Make a facetted dotplot (One facet per group)
+
+``` r
+oraclot(bp.df, top_n = 20) + scale_color_viridis_c()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
 ## Limitations
 
