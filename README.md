@@ -1,5 +1,3 @@
-oracl
-================
 Lukas Muenter
 27 7 2021
 
@@ -85,16 +83,27 @@ bp.ls = lapply(gs.ls, oraclient,
 
 ``` r
 # get ONE dataframe (ID-column `grouping` specifies the geneset)
-bp.df <- oracl_list_to_df(bp.ls)
+bp.ls.df <- oracl_list_to_df(bp.ls)
 ```
 
 ### Make a facetted dotplot (One facet per group)
 
+We can now plot overrepresented GO-Terms using group information in the
+column `bp.df$grouping`. We can either make a facetted dotplot:
+
 ``` r
-oraclot(bp.df, top_n = 20) + scale_color_viridis_c()
+oraclot(bp.ls.df, top_n = 20) + scale_color_viridis_c()
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+
+Or we can make a facetted volcano plot:
+
+``` r
+volcanoracl(bp.ls.df, top_n = 20)
+```
+
+![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
 ## Limitations
 
