@@ -27,7 +27,19 @@ example dataset provided with the package. Note, that we specify the
 `oracl::oraclient()`. Other options are of course `ont = mf` (Molecular
 Function) and `ont = cc` (Cellular Component).
 
-    ## [1] "[oraclient] Overrepresentation test. Ontology: bp, taxon: Athaliana, FISHER test and FDR correction. P-threshold is 0.05, FDR threshold is 0.05."
+``` r
+# load package
+library(oracl)
+
+# Get a set of AGI-codes.
+gs <- oracl:::GS01
+
+# Get a background geneset (optional)
+bg <- oracl:::background
+
+# conduct GO-Term ORA via PANTHER
+bp.df <- oraclient(gs, bg = bg, ont = "bp", fdr.thresh = 0.05)
+```
 
     ## Joining, by = "GO_ID"
 
@@ -41,10 +53,16 @@ library(ggplot2)
 
 # Make a plot
 volcano.p = volcanoracl(bp.df)
+```
 
+    ## Adding missing grouping variables: `grouping`
+
+    ## Joining, by = c("label", "grouping")
+
+``` r
 # The plot `volcano.p` is a ggplot-object.
 # We can change its attributes!
-volcano.p + scale_colour_manual(values = "steelblue")
+volcano.p + scale_colour_gradientn(colours = "steelblue")
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
@@ -89,19 +107,34 @@ bp.ls.df <- oracl_list_to_df(bp.ls)
 ### Make a facetted dotplot (One facet per group)
 
 We can now plot overrepresented GO-Terms using group information in the
-column `bp.df$grouping`. We can either make a facetted dotplot:
+column `bp.df$grouping`. Here, we want to facet the plot according to
+the grouping variable (stored in `bp.df$grouping`). We also specify the
+desired number of columns, the position of the facet label, and whether
+or not we only include labels found in each dataset (change these things
+according to your data\!):
 
 ``` r
-oraclot(bp.ls.df, top_n = 20) + scale_color_viridis_c()
+oraclot(bp.ls.df, top_n = 5) + 
+    facet_wrap(grouping ~ ., ncol = 1, strip.position = "right", scales = "free_y") +
+    scale_color_viridis_c()
 ```
+
+    ## Adding missing grouping variables: `grouping`
+
+    ## Joining, by = c("label", "grouping")
 
 ![](README_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
-Or we can make a facetted volcano plot:
+We can also make a facetted volcano plot:
 
 ``` r
-volcanoracl(bp.ls.df, top_n = 20)
+volcanoracl(bp.ls.df, top_n = 5) +
+    facet_wrap(grouping ~ ., nrow = 1)
 ```
+
+    ## Adding missing grouping variables: `grouping`
+
+    ## Joining, by = c("label", "grouping")
 
 ![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 

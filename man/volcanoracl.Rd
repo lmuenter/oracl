@@ -4,7 +4,15 @@
 \alias{volcanoracl}
 \title{Volcano Plot}
 \usage{
-volcanoracl(df, x = "fold_change", y = "fdr", top_n = 5)
+volcanoracl(
+  df,
+  x = "fold_change",
+  y = "fdr",
+  top_n = 5,
+  trunc = 20,
+  side = "left",
+  include_ID = TRUE
+)
 }
 \arguments{
 \item{df}{A dataframe generated using `oracl::oraclient`}
@@ -14,6 +22,12 @@ volcanoracl(df, x = "fold_change", y = "fdr", top_n = 5)
 \item{y}{Significance metric to be used for the x axis of the plot. Will be -log-transformed. Options: `c("p.value", "fdr")` (default: `"fdr"`)}
 
 \item{top_n}{Number of terms that should be labelled. Default: 5.}
+
+\item{trunc}{To which size should Term-label be truncated? Defaults to `20`}
+
+\item{side}{From which side should truncation happen? Defauls to `left`}
+
+\item{include_ID}{should GO_ID be included in plot labels? Defaults to `TRUE`}
 }
 \description{
 Creates a volcano plot from the output of `oracl::oraclient`

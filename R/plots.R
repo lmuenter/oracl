@@ -15,10 +15,14 @@
 #' @param x NUMERIC column to be used for the x axis of the plot. Will be log2-transformed. (default: `"fold_change"`)
 #' @param y Significance metric to be used for the x axis of the plot. Will be -log-transformed. Options: `c("p.value", "fdr")` (default: `"fdr"`)
 #' @param top_n Number of terms that should be labelled. Default: 5.
+#' @param trunc To which size should Term-label be truncated? Defaults to `20`
+#' @param side From which side should truncation happen? Defauls to `left`
+#' @param include_ID should GO_ID be included in plot labels? Defaults to `TRUE`
 #' @import ggplot2
+#' @importFrom tibble add_column
 #' @importFrom ggrepel geom_text_repel
 #' @export
-volcanoracl = function(df, x = "fold_change", y = "fdr", top_n = 5){
+volcanoracl = function(df, x = "fold_change", y = "fdr", top_n = 5, trunc = 20, side = "left", include_ID = TRUE){
 
   ## check dataframe
   if(!is.data.frame(df)) {
@@ -53,32 +57,46 @@ volcanoracl = function(df, x = "fold_change", y = "fdr", top_n = 5){
 
   }
 
-  ## get topN genes
-  top_genes <- df %>%
-    slice_max(-log(fdr), n = top_n) %>%
-    pull(label)
+  ## truncate labels, if desired, include GO_ID
+  if(include_ID){
 
-  ## create basic plot
+    df <- df %>%
+      mutate(
+        "label" = paste(str_trunc(label, 20, side = side),
+                        " (",
+                        GO_ID,
+                        ")",
+                        sep = "")
+      )
+  } else {
+
+    df <- df %>%
+      mutate(
+        "label" = str_trunc(label, 20, side = side)
+      )
+
+  }
+
+
+  ## if column "grouping" doesn't exist, add the group
+  cols <- c(grouping = NA_real_)
+  df <- add_column(df, !!!cols[setdiff(names(cols), names(df))])
+
+  ## Get top terms per group
+  top_terms <- df %>%
+    group_by(grouping) %>%
+    slice_max(-log(fdr), n = top_n) %>%
+    mutate("labelthis" = label) %>%
+    select(label, labelthis)
+
+  ## Plot
   p <- df %>%
-    mutate(labelthis = ifelse(label %in% top_genes, label, ""),
-           grouping = ifelse(!"grouping" %in% colnames(.), "a", grouping)) %>%
+    left_join(top_terms) %>%
+    mutate(labelthis = ifelse(!is.na(labelthis), labelthis, "")) %>%
     ggplot(aes(x = log2(fold_change), y = -log(fdr), label = labelthis, color = grouping)) +
     geom_point(show.legend = FALSE) +
     geom_text_repel(color = "black") +
     theme_bw()
-
-  ## if grouped dataframe, facet the plot
-  if("grouping" %in% colnames(df)){
-
-    p <- df %>%
-      mutate(labelthis = ifelse(label %in% top_genes, label, "")) %>%
-      ggplot(aes(x = log2(fold_change), y = -log(fdr), label = labelthis, color = grouping)) +
-      geom_point(show.legend = FALSE) +
-      geom_text_repel(color = "black") +
-      theme_bw() +
-      facet_wrap(grouping ~ .)
-
-  }
 
   ## plot the darn thing
   p
@@ -91,8 +109,13 @@ volcanoracl = function(df, x = "fold_change", y = "fdr", top_n = 5){
 #' @param df A dataframe generated using `oracl::oraclient`.
 #' @param top_n if set, number of terms that should be labelled. Default: `50`. Select `NULL` for no filter at all (not recommended, will get cluttered).
 #' @import ggplot2
+#' @param trunc To which size should Term-label be truncated? Defaults to `20`
+#' @param side From which side should truncation happen? Defauls to `left`
+#' @param include_ID should GO_ID be included in plot labels? Defaults to `TRUE`
+#' @importFrom tibble add_column
+#' @importFrom stringr str_trunc
 #' @export
-oraclot = function(df, top_n = 50){
+oraclot = function(df, top_n = 50, trunc = 20, side = "left", include_ID = TRUE){
 
   ## check dataframe
   if(!is.data.frame(df)) {
@@ -101,48 +124,49 @@ oraclot = function(df, top_n = 50){
 
   }
 
-  ## get topN genes
-  if(!is.null(top_n)){
+  ## truncate labels, if desired, include GO_ID
+  if(include_ID){
 
-    top_terms <- df %>%
-      slice_max(fold_change, n = top_n) %>%
-      pull(label)
-
+    df <- df %>%
+      mutate(
+        "label" = paste(str_trunc(label, 20, side = side),
+                        " (",
+                        GO_ID,
+                        ")",
+                        sep = "")
+      )
   } else {
 
-    top_terms <- NULL
+    df <- df %>%
+      mutate(
+        "label" = str_trunc(label, 20, side = side)
+      )
 
   }
 
   ## get label order
   label_order <- df %>% arrange(fold_change) %>% pull(label)
 
-  ## create basic plot. If top_terms are provided, only use those
-  if(is.null(top_terms)){
+  ## if column "grouping" doesn't exist, add the group
+  cols <- c(grouping = NA_real_)
+  df <- add_column(df, !!!cols[setdiff(names(cols), names(df))])
 
-    p <- df %>%
-      mutate("label" = factor(label, levels = label_order)) %>%
-      ggplot(aes(x = log2(fold_change), y = label, size = -log(p.value), color = -log(fdr))) +
-      geom_point() +
-      theme_bw()
+  ## Get top terms per group
+  top_terms <- df %>%
+    group_by(grouping) %>%
+    slice_max(-log(fdr), n = top_n) %>%
+    mutate("labelthis" = label) %>%
+    select(label, labelthis)
 
-  } else {
-
-    p <- df %>%
-      mutate("label" = factor(label, levels = label_order)) %>%
-      filter(label %in% top_terms) %>%
-      ggplot(aes(x = log2(fold_change), y = label, size = -log(p.value), color = -log(fdr))) +
-      geom_point() +
-      theme_bw()
-
-  }
-
-  ## if grouped dataframe, facet the plot
-  if("grouping" %in% colnames(df)){
-
-    p <- p + facet_wrap(grouping ~ ., ncol = 1, strip.position = "right", scales = "free_y")
-
-  }
+  ## create basic plot.
+  p = df %>%
+    left_join(top_terms) %>%
+    mutate(labelthis = ifelse(!is.na(labelthis), labelthis, "")) %>%
+    filter(labelthis != "") %>%
+    mutate("labelthis" = factor(labelthis, levels = label_order)) %>%
+    ggplot(aes(x = log2(fold_change), y = labelthis, size = -log(p.value), color = -log(fdr))) +
+    geom_point() +
+    theme_bw()
 
   ## plot the darn thing
   p
